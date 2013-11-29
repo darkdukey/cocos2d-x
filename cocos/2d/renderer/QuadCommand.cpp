@@ -7,6 +7,7 @@
 #include "ccGLStateCache.h"
 
 NS_CC_BEGIN
+RenderCommandPool<QuadCommand> QuadCommand::_commandPool;
 
 QuadCommand::QuadCommand()
 :RenderCommand()
@@ -109,6 +110,11 @@ void QuadCommand::useMaterial()
 
     //Set texture
     GL::bindTexture2D(_textureID);
+}
+
+void QuadCommand::releaseToPool()
+{
+    getCommandPool().pushBackCommand(this);
 }
 
 NS_CC_END
