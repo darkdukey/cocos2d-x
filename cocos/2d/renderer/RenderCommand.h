@@ -25,11 +25,12 @@ enum RenderCommandType
 //TODO make RenderCommand inherent from Object
 class RenderCommand
 {
-public:
-
+protected:
     RenderCommand();
     virtual ~RenderCommand();
+public:
     virtual int64_t generateID() = 0;
+    virtual void releaseToPool() = 0;
 
     virtual /**
     * Get Render Command Id
