@@ -105,11 +105,16 @@ void QuadCommand::useMaterial()
 
     _shader->setUniformsForBuiltins();
 
-    //set blend mode
-    GL::blendFunc(_blendType.src, _blendType.dst);
-
     //Set texture
     GL::bindTexture2D(_textureID);
+
+    //set blend mode
+    GL::blendFunc(_blendType.src, _blendType.dst);
+}
+
+void QuadCommand::releaseToPool()
+{
+    getCommandPool().pushBackCommand(this);
 }
 
 void QuadCommand::releaseToPool()
