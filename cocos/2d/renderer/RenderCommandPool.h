@@ -23,10 +23,10 @@ public:
     }
     ~RenderCommandPool()
     {
-        if( 0 != _usedPool.size())
-        {
-            CCLOG("All RenderCommand should not be used when Pool is released!");
-        }
+        //if( 0 != _usedPool.size())
+        //{
+        //    CCLOG("All RenderCommand should not be used when Pool is released!");
+        //}
         for (typename std::list<T*>::iterator iter = _freePool.begin(); iter != _freePool.end(); ++iter)
         {
             delete *iter;
@@ -45,29 +45,29 @@ public:
         }
         else
         {
-            result = _freePool.front();
-            _freePool.pop_front();
+            result = _freePool.back();
+            _freePool.pop_back();
         }
-        _usedPool.insert(result);
+        //_usedPool.insert(result);
         return result;
     }
     
     void pushBackCommand(T* ptr)
     {
-        if(_usedPool.find(ptr) == _usedPool.end())
-        {
-            CCLOG("push Back Wrong command!");
-            return;
-        }
+        //if(_usedPool.find(ptr) == _usedPool.end())
+        //{
+        //    CCLOG("push Back Wrong command!");
+        //    return;
+        //}
         
         _freePool.push_back(ptr);
-        _usedPool.erase(ptr);
+        //_usedPool.erase(ptr);
         
     }
     
 private:
     std::list<T*> _freePool;
-    std::set<T*> _usedPool;
+    //std::set<T*> _usedPool;
 };
 
 NS_CC_END

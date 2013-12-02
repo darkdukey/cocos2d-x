@@ -353,7 +353,6 @@ Frustum::IntersectResult Frustum::intersectAABB(const AABB& aabb) const
     {
         kmPlane plane = _frustumPlanes[static_cast<FrustumPlane>(planeIndex)];
         kmVec3 normal = {plane.a, plane.b, plane.c};
-        kmVec3Normalize(&normal, &normal);
         kmVec3 positivePoint = aabb.getPositivePoint(normal);
         kmVec3 negativePoint = aabb.getNegativePoint(normal);
         
