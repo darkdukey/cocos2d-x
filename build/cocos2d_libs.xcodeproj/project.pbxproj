@@ -3106,6 +3106,7 @@
 		B375105A1823AC9200B3BA6A /* CCPhysicsWorldInfo_box2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CCPhysicsWorldInfo_box2d.h; path = ../box2d/CCPhysicsWorldInfo_box2d.h; sourceTree = "<group>"; };
 		ED4F643218458AD00055B093 /* Frustum.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Frustum.cpp; path = renderer/Frustum.cpp; sourceTree = "<group>"; };
 		ED4F643318458AD00055B093 /* Frustum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Frustum.h; path = renderer/Frustum.h; sourceTree = "<group>"; };
+		ED641508184726C20017CBF1 /* RenderCommandPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RenderCommandPool.h; path = renderer/RenderCommandPool.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -5364,6 +5365,7 @@
 				74AC84D8B35BF1DF77F87298 /* CCNewDrawNode.h */,
 				74AC88316A17EBEA108917C6 /* CCNewParticleSystemQuad.cpp */,
 				74AC80FEAD5A72F9BEFE87B9 /* CCNewParticleSystemQuad.h */,
+				ED641508184726C20017CBF1 /* RenderCommandPool.h */,
 			);
 			name = renderer;
 			sourceTree = "<group>";
