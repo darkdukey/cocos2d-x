@@ -44,7 +44,8 @@ void NewDrawNode::draw()
 {
     kmGLGetMatrix(KM_GL_MODELVIEW, &_transformMatrix);
 
-    CustomCommand* cmd = new CustomCommand(0, _vertexZ);
+    CustomCommand* cmd = CustomCommand::getCommandPool().generateCommand();
+    cmd->init(0, _vertexZ);
     cmd->func = CC_CALLBACK_0(NewDrawNode::onDraw, this);
     Renderer::getInstance()->addCommand(cmd);
 }

@@ -663,7 +663,8 @@ void Sprite::draw(void)
 {
     updateQuadVertices();
     //TODO implement z order
-    QuadCommand* renderCommand = new QuadCommand(0, _vertexZ, _texture->getName(), _shaderProgram, _blendFunc, &_quad, 1);
+    QuadCommand* renderCommand = QuadCommand::getCommandPool().generateCommand();
+    renderCommand->init(0, _vertexZ, _texture->getName(), _shaderProgram, _blendFunc, &_quad, 1);
 
     Renderer::getInstance()->addCommand(renderCommand);
 }

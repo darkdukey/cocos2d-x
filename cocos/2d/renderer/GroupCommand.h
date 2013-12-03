@@ -9,6 +9,8 @@
 
 #include "CCPlatformMacros.h"
 #include "RenderCommand.h"
+#include "RenderCommandPool.h"
+
 #include <map>
 
 NS_CC_BEGIN
@@ -33,10 +35,11 @@ protected:
 
 class GroupCommand : public RenderCommand
 {
-
-public:
-    GroupCommand(int viewport, int32_t depth);
+protected:
+    GroupCommand();
     ~GroupCommand();
+public:
+    void init(int viewport, int32_t depth);
 
     // +----------+----------+-----+-----------------------------------+
     // |          |          |     |                |                  |
@@ -44,6 +47,7 @@ public:
     // |   3 bits |    1 bit |     |    24 bits     |                  |
     // +----------+----------+-----+----------------+------------------+
     virtual int64_t generateID() override;
+    virtual void releaseToPool() override;
 
     inline bool isTranslucent() {return true;}
     inline int getRenderQueueID() {return _renderQueueID;}
@@ -52,6 +56,11 @@ protected:
     int _viewport;
     int32_t _depth;
     int _renderQueueID;
+    
+public:
+    friend class RenderCommandPool<GroupCommand>;
+    static RenderCommandPool<GroupCommand>& getCommandPool() { return _commandPool; }
+    static RenderCommandPool<GroupCommand> _commandPool;
 };
 
 NS_CC_END

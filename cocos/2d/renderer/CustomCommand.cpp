@@ -7,13 +7,21 @@
 
 NS_CC_BEGIN
 
-CustomCommand::CustomCommand(int viewport, int32_t depth)
+RenderCommandPool<CustomCommand> CustomCommand::_commandPool;
+
+CustomCommand::CustomCommand()
 :RenderCommand()
-, _viewport(viewport)
-, _depth(depth)
+, _viewport(0)
+, _depth(0)
 , func(nullptr)
 {
     _type = CUSTOM_COMMAND;
+}
+
+void CustomCommand::init(int viewport, int32_t depth)
+{
+    _viewport = viewport;
+    _depth = depth;
 }
 
 CustomCommand::~CustomCommand()
@@ -38,6 +46,11 @@ void CustomCommand::execute()
     {
         func();
     }
+}
+
+void CustomCommand::releaseToPool()
+{
+    getCommandPool().pushBackCommand(this);
 }
 
 NS_CC_END

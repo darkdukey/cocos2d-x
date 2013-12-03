@@ -8,15 +8,18 @@
 #define _CC_CUSTOMCOMMAND_H_
 
 #include "RenderCommand.h"
+#include "RenderCommandPool.h"
 
 NS_CC_BEGIN
 using namespace std;
 
 class CustomCommand : public RenderCommand
 {
-public:
-    CustomCommand(int viewport, int32_t depth);
+protected:
+    CustomCommand();
     ~CustomCommand();
+public:
+    void init(int viewport, int32_t depth);
 
     // +----------+----------+-----+-----------------------------------+
     // |          |          |     |                |                  |
@@ -24,6 +27,7 @@ public:
     // |   3 bits |    1 bit |     |    24 bits     |                  |
     // +----------+----------+-----+----------------+------------------+
     virtual int64_t generateID();
+    virtual void releaseToPool() override;
 
     void execute();
 
@@ -36,6 +40,11 @@ protected:
     int _viewport;
 
     int32_t _depth;
+
+public:
+    friend class RenderCommandPool<CustomCommand>;
+    static RenderCommandPool<CustomCommand>& getCommandPool() { return _commandPool; }
+    static RenderCommandPool<CustomCommand> _commandPool;
 
 };
 
