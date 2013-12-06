@@ -46,6 +46,7 @@ typedef struct _hashUniformEntry
 } tHashUniformEntry;
 
 const char* GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR = "ShaderPositionTextureColor";
+const char* GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP = "ShaderPositionTextureColor_noMVP";
 const char* GLProgram::SHADER_NAME_POSITION_TEXTURE_ALPHA_TEST = "ShaderPositionTextureColorAlphaTest";
 const char* GLProgram::SHADER_NAME_POSITION_COLOR = "ShaderPositionColor";
 const char* GLProgram::SHADER_NAME_POSITION_TEXTURE = "ShaderPositionTexture";
@@ -234,8 +235,9 @@ void GLProgram::updateUniforms()
 
     _uniforms[UNIFORM_SAMPLER] = glGetUniformLocation(_program, UNIFORM_NAME_SAMPLER);
 
+    _flags.usesP = _uniforms[UNIFORM_P_MATRIX] != -1;
+	_flags.usesMV = _uniforms[UNIFORM_MV_MATRIX] != -1;
     _flags.usesMVP = _uniforms[UNIFORM_MVP_MATRIX] != -1;
-	_flags.usesMV = (_uniforms[UNIFORM_MV_MATRIX] != -1 && _uniforms[UNIFORM_P_MATRIX] != -1 );
 	_flags.usesTime = (
                        _uniforms[UNIFORM_TIME] != -1 ||
                        _uniforms[UNIFORM_SIN_TIME] != -1 ||
@@ -553,16 +555,18 @@ void GLProgram::setUniformsForBuiltins()
 	kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV);
 	
 
+    if(_flags.usesP)
+        setUniformLocationWithMatrix4fv(_uniforms[UNIFORM_P_MATRIX], matrixP.mat, 1);
+
+    if(_flags.usesMV)
+        setUniformLocationWithMatrix4fv(_uniforms[UNIFORM_MV_MATRIX], matrixMV.mat, 1);
+
     if(_flags.usesMVP) {
         kmMat4 matrixMVP;
         kmMat4Multiply(&matrixMVP, &matrixP, &matrixMV);
         setUniformLocationWithMatrix4fv(_uniforms[UNIFORM_MVP_MATRIX], matrixMVP.mat, 1);
     }
 
-    if(_flags.usesMV) {
-        setUniformLocationWithMatrix4fv(_uniforms[UNIFORM_P_MATRIX], matrixP.mat, 1);
-        setUniformLocationWithMatrix4fv(_uniforms[UNIFORM_MV_MATRIX], matrixMV.mat, 1);
-    }
 
 	if(_flags.usesTime) {
 		Director *director = Director::getInstance();

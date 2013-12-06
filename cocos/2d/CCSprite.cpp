@@ -251,7 +251,7 @@ bool Sprite::initWithTexture(Texture2D *texture, const Rect& rect, bool rotated)
         _quad.tr.colors = Color4B::WHITE;
         
         // shader program
-        setShaderProgram(ShaderCache::getInstance()->getProgram(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR));
+        setShaderProgram(ShaderCache::getInstance()->getProgram(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP));
         
         // update texture (calls updateBlendFunc)
         setTexture(texture);
@@ -663,20 +663,31 @@ void Sprite::updateTransform(void)
 
 void Sprite::draw(void)
 {
-    updateQuadVertices();
+//    updateQuadVertices();
+
+    kmMat4 mv;
+    kmGLGetMatrix(KM_GL_MODELVIEW, &mv);
+
     //TODO implement z order
     QuadCommand* renderCommand = QuadCommand::getCommandPool().generateCommand();
-    renderCommand->init(0, _vertexZ, _texture->getName(), _shaderProgram, _blendFunc, &_quad, 1);
+    renderCommand->init(0, _vertexZ, _texture->getName(), _shaderProgram, _blendFunc, &_quad, 1, mv);
     Renderer::getInstance()->addCommand(renderCommand);
 }
 
 void Sprite::updateQuadVertices()
 {
 
-#ifdef CC_USE_PHYSICS
-    updatePhysicsTransform();
-    setDirty(true);
-#endif
+//#ifdef CC_USE_PHYSICS
+//    updatePhysicsTransform();
+//    setDirty(true);
+//#endif
+#define kQuadSize sizeof(_quad.bl)
+#ifdef EMSCRIPTEN
+    long offset = 0;
+    setGLBufferData(&_quad, 4 * kQuadSize, 0);
+#else
+    size_t offset = (size_t)&_quad;
+#endif // EMSCRIPTEN
 
     //TODO optimize the performance cache affineTransformation
 

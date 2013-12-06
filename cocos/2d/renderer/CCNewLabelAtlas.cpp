@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2010-2012 cocos2d-x.org
+ Copyright (c) 2013 cocos2d-x.org
 
  http://www.cocos2d-x.org
 
@@ -22,67 +22,46 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __CCDATA_H__
-#define __CCDATA_H__
 
-#include "CCPlatformMacros.h"
-#include "CCObject.h"
+#include "CCNewLabelAtlas.h"
+#include "RenderCommand.h"
+#include "Renderer.h"
+#include "QuadCommand.h"
+#include "CCMenuItem.h"
+#include "Frustum.h"
+#include "CCDirector.h"
+#include "CCTextureAtlas.h"
+#include "CCShaderCache.h"
 
 NS_CC_BEGIN
 
-class CC_DLL Data : public Object
-{
-public:
-    /**
-     * @js NA
-     * @lua NA
-     */
-    Data(unsigned char *pBytes, const ssize_t nSize);
-    /**
-     * @js NA
-     * @lua NA
-     */
-    Data(Data *pData);
-    /**
-     * @js NA
-     * @lua NA
-     */
-    ~Data();
-    /**
-     * @js NA
-     * @lua NA
-     */
-    static Data* create(unsigned char *pBytes, const ssize_t nSize)
-    {
-        Data* pRet = new Data(pBytes, nSize);
-        if (pRet)
-        {
-            pRet->autorelease();
-        }
-        return pRet;
-    }    
-    /**
-     * @js NA
-     * @lua NA
-     */
-    unsigned char* getBytes() const;
-    /**
-     * @js NA
-     * @lua NA
-     */
-    ssize_t getSize() const;
-    
-    /** override functions
-     * @js NA
-     * @lua NA
-     */
-    virtual void acceptVisitor(DataVisitor &visitor) { visitor.visit(this); }
 
-private:
-    unsigned char* _bytes;
-    ssize_t _size;
-};
+void NewLabelAtlas::draw()
+{
+//    LabelAtlas::draw();
+//    _renderCommand.init(0, _vertexZ, _textureAtlas->getTexture()->getName(), _shaderProgram, _blendFunc,
+//                        _textureAtlas->getQuads(), _textureAtlas->getTotalQuads() );
+//
+//    Renderer::getInstance()->addCommand(&_renderCommand);
+
+
+    auto shader = ShaderCache::getInstance()->getProgram(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP);
+
+    kmMat4 mv;
+    kmGLGetMatrix(KM_GL_MODELVIEW, &mv);
+
+    QuadCommand* cmd = QuadCommand::getCommandPool().generateCommand();
+    cmd->init(0,
+              _vertexZ,
+              _textureAtlas->getTexture()->getName(),
+              shader,
+              _blendFunc,
+              _textureAtlas->getQuads(),
+              _textureAtlas->getTotalQuads(),
+              mv);
+              
+    Renderer::getInstance()->addCommand(cmd);
+
+}
 
 NS_CC_END
-
-#endif // __CCDATA_H__

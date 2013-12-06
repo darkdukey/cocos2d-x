@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2010-2012 cocos2d-x.org
+ Copyright (c) 2013 cocos2d-x.org
 
  http://www.cocos2d-x.org
 
@@ -22,67 +22,29 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __CCDATA_H__
-#define __CCDATA_H__
 
+#ifndef __CCNEWLABELATLAS_H_
+#define __CCNEWLABELATLAS_H_
+
+#include "CCLabelAtlas.h"
 #include "CCPlatformMacros.h"
-#include "CCObject.h"
+#include "QuadCommand.h"
 
 NS_CC_BEGIN
 
-class CC_DLL Data : public Object
+class NewLabelAtlas : public LabelAtlas
 {
-public:
-    /**
-     * @js NA
-     * @lua NA
-     */
-    Data(unsigned char *pBytes, const ssize_t nSize);
-    /**
-     * @js NA
-     * @lua NA
-     */
-    Data(Data *pData);
-    /**
-     * @js NA
-     * @lua NA
-     */
-    ~Data();
-    /**
-     * @js NA
-     * @lua NA
-     */
-    static Data* create(unsigned char *pBytes, const ssize_t nSize)
-    {
-        Data* pRet = new Data(pBytes, nSize);
-        if (pRet)
-        {
-            pRet->autorelease();
-        }
-        return pRet;
-    }    
-    /**
-     * @js NA
-     * @lua NA
-     */
-    unsigned char* getBytes() const;
-    /**
-     * @js NA
-     * @lua NA
-     */
-    ssize_t getSize() const;
     
-    /** override functions
-     * @js NA
-     * @lua NA
-     */
-    virtual void acceptVisitor(DataVisitor &visitor) { visitor.visit(this); }
+public:
+    NewLabelAtlas() {}
+    virtual ~NewLabelAtlas() {}
 
-private:
-    unsigned char* _bytes;
-    ssize_t _size;
+    virtual void draw(void) override;
+
+protected:
+    QuadCommand _renderCommand;
 };
 
 NS_CC_END
 
-#endif // __CCDATA_H__
+#endif /* defined(__CCNEWLABELATLAS_H_) */

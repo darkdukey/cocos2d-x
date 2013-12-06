@@ -78,6 +78,7 @@ public:
     };
     
     static const char* SHADER_NAME_POSITION_TEXTURE_COLOR;
+    static const char* SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP;
     static const char* SHADER_NAME_POSITION_TEXTURE_ALPHA_TEST;
     static const char* SHADER_NAME_POSITION_COLOR;
     static const char* SHADER_NAME_POSITION_TEXTURE;
@@ -255,6 +256,7 @@ private:
         unsigned int usesTime:1;
         unsigned int usesMVP:1;
         unsigned int usesMV:1;
+        unsigned int usesP:1;
 		unsigned int usesRandom:1;
 
         // handy way to initialize the bitfield

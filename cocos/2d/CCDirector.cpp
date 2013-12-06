@@ -45,7 +45,7 @@ THE SOFTWARE.
 #include "platform/CCFileUtils.h"
 #include "CCApplication.h"
 #include "CCLabelBMFont.h"
-#include "CCLabelAtlas.h"
+#include "CCNewLabelAtlas.h"
 #include "CCActionManager.h"
 #include "CCAnimationCache.h"
 #include "CCTouch.h"
@@ -875,7 +875,7 @@ void Director::calculateMPF()
 }
 
 // returns the FPS image data pointer and len
-void Director::getFPSImageData(unsigned char** datapointer, long* length)
+void Director::getFPSImageData(unsigned char** datapointer, ssize_t* length)
 {
     // XXX fixed me if it should be used 
     *datapointer = cc_fps_images_png;
@@ -898,7 +898,7 @@ void Director::createStatsLabel()
     Texture2D::PixelFormat currentFormat = Texture2D::getDefaultAlphaPixelFormat();
     Texture2D::setDefaultAlphaPixelFormat(Texture2D::PixelFormat::RGBA4444);
     unsigned char *data = nullptr;
-    long dataLength = 0;
+    ssize_t dataLength = 0;
     getFPSImageData(&data, &dataLength);
 
     Image* image = new Image();
@@ -926,17 +926,17 @@ void Director::createStatsLabel()
      */
     float factor = EGLView::getInstance()->getDesignResolutionSize().height / 320.0f;
 
-    _FPSLabel = new LabelAtlas();
+    _FPSLabel = new NewLabelAtlas;
     _FPSLabel->setIgnoreContentScaleFactor(true);
     _FPSLabel->initWithString("00.0", texture, 12, 32 , '.');
     _FPSLabel->setScale(factor);
 
-    _SPFLabel = new LabelAtlas();
+    _SPFLabel = new NewLabelAtlas;
     _SPFLabel->setIgnoreContentScaleFactor(true);
     _SPFLabel->initWithString("0.000", texture, 12, 32, '.');
     _SPFLabel->setScale(factor);
 
-    _drawsLabel = new LabelAtlas();
+    _drawsLabel = new NewLabelAtlas;
     _drawsLabel->setIgnoreContentScaleFactor(true);
     _drawsLabel->initWithString("000", texture, 12, 32, '.');
     _drawsLabel->setScale(factor);
@@ -1055,9 +1055,6 @@ void DisplayLinkDirector::mainLoop()
     }
     else if (! _invalid)
     {
-        // invoke call back from other thread
-        ThreadHelper::doCallback();
-        
         drawScene();
      
         // release the objects
