@@ -30,6 +30,9 @@ THE SOFTWARE.
 
 
 namespace cocostudio {
+
+class WidgetPropertiesReader0300;
+
 namespace timeline{
 
 class NodeCache
@@ -52,15 +55,22 @@ protected:
 
     void initNode(cocos2d::Node* node, const rapidjson::Value& json);
 
+    // load nodes
     cocos2d::Node* loadSimpleNode(const rapidjson::Value& json);
-    cocos2d::Node* loadSprite(const rapidjson::Value& json);
-    cocos2d::Node* loadParticle(const rapidjson::Value& json);
+    cocos2d::Node* loadSubGraph  (const rapidjson::Value& json);
+    cocos2d::Node* loadSprite    (const rapidjson::Value& json);
+    cocos2d::Node* loadParticle  (const rapidjson::Value& json);
+
+    // load gui
+    cocos2d::Node* loadWidget(const rapidjson::Value& json);
 
     typedef std::function<cocos2d::Node*(const rapidjson::Value& json)> NodeCreateFunc;
     typedef std::pair<std::string, NodeCreateFunc> Pair;
 
     std::unordered_map<std::string, NodeCreateFunc> _funcs;
     cocos2d::Map<std::string, cocos2d::Node*> _nodes;
+
+    WidgetPropertiesReader0300* _guiReader;
 };
 
 }

@@ -26,38 +26,59 @@ THE SOFTWARE.
 #include "CCTimelineActionCache.h"
 #include "CCFrame.h"
 
+#include "CCSGUIReader.h"
+
 using namespace cocos2d;
+using namespace cocos2d::ui;
 
 namespace cocostudio {
 namespace timeline{
 
 
-static const char* NodeType_Node     = "Node";
-static const char* NodeType_Sprite   = "Sprite";
-static const char* NodeType_Particle = "Particle";
+static const char* ClassName_Node     = "Node";
+static const char* ClassName_SubGraph = "SubGraph";
+static const char* ClassName_Sprite   = "Sprite";
+static const char* ClassName_Particle = "Particle";
+
+static const char* ClassName_Button     = "Button";
+static const char* ClassName_CheckBox   = "CheckBox";
+static const char* ClassName_ImageView  = "ImageView";
+static const char* ClassName_TextAtlas  = "TextAtlas";
+static const char* ClassName_TextBMFont = "TextBMFont";
+static const char* ClassName_Text       = "Text";
+static const char* ClassName_LoadingBar = "LoadingBar";
+static const char* ClassName_TextField  = "TextField";
+static const char* ClassName_Slider     = "Slider";
+static const char* ClassName_Layout     = "Layout";
+static const char* ClassName_ScrollView = "ScrollView";
+static const char* ClassName_ListView   = "ListView";
+static const char* ClassName_PageView   = "PageView";
+static const char* ClassName_Widget     = "Widget";
 
 
-static const char* NODE        = "node";
+static const char* NODE        = "nodeTree";
 static const char* CHILDREN    = "children";
-static const char* NODETYPE    = "nodeType";
+static const char* CLASSNAME   = "classname";
 static const char* FILE_PATH   = "filePath";
 static const char* ACTION_TAG  = "actionTag";
 
+static const char* OPTIONS     = "options";
+
 static const char* X                = "x";
 static const char* Y                = "y";
-static const char* SCALE_X          = "scalex";
-static const char* SCALE_Y          = "scaley";
-static const char* SKEW_X           = "skewx";
-static const char* SKEW_Y           = "skewy";
+static const char* SCALE_X          = "scaleX";
+static const char* SCALE_Y          = "scaleY";
+static const char* SKEW_X           = "skewX";
+static const char* SKEW_Y           = "skewY";
 static const char* ROTATION         = "rotation";
 static const char* ROTATION_SKEW_X  = "rotationSkewX";
 static const char* ROTATION_SKEW_Y  = "rotationSkewY";
-static const char* ANCHOR_X         = "anchorx";
-static const char* ANCHOR_Y         = "anchory";
-static const char* ALPHA            = "alpha";
-static const char* RED              = "red";
-static const char* GREEN            = "green";
-static const char* BLUE             = "blue";
+static const char* ANCHOR_X         = "anchorPointX";
+static const char* ANCHOR_Y         = "anchorPointY";
+static const char* ALPHA            = "opacity";
+static const char* RED              = "colorR";
+static const char* GREEN            = "colorG";
+static const char* BLUE             = "colorB";
 
 static NodeCache* _sharedNodeCache = nullptr;
 
@@ -85,9 +106,28 @@ void NodeCache::purge()
 void NodeCache::init()
 {
     using namespace std::placeholders;
-    _funcs.insert(Pair(NodeType_Node,       std::bind(&NodeCache::loadSimpleNode, this, _1)));
-    _funcs.insert(Pair(NodeType_Sprite,     std::bind(&NodeCache::loadSprite,     this, _1)));
-    _funcs.insert(Pair(NodeType_Particle,   std::bind(&NodeCache::loadParticle,   this, _1)));
+
+    _funcs.insert(Pair(ClassName_Node,      std::bind(&NodeCache::loadSimpleNode, this, _1)));
+    _funcs.insert(Pair(ClassName_SubGraph,  std::bind(&NodeCache::loadSubGraph,   this, _1)));
+    _funcs.insert(Pair(ClassName_Sprite,    std::bind(&NodeCache::loadSprite,     this, _1)));
+    _funcs.insert(Pair(ClassName_Particle,  std::bind(&NodeCache::loadParticle,   this, _1)));
+
+    _funcs.insert(Pair(ClassName_Button,    std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_CheckBox,  std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_ImageView, std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_TextAtlas, std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_TextBMFont,std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_Text,      std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_LoadingBar,std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_TextField, std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_Slider,    std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_Layout,    std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_ScrollView,std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_ListView,  std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_PageView,  std::bind(&NodeCache::loadWidget,   this, _1)));
+    _funcs.insert(Pair(ClassName_Widget,    std::bind(&NodeCache::loadWidget,   this, _1)));
+
+    _guiReader = new WidgetPropertiesReader0300();
 }
 
 cocos2d::Node* NodeCache::createNode(const std::string& filename)
@@ -123,7 +163,7 @@ cocos2d::Node* NodeCache::loadNodeWithContent(const std::string& content)
     if (doc.HasParseError()) {
         CCLOG("GetParseError %s\n", doc.GetParseError());
     }
-    
+
     const rapidjson::Value& subJson = DICTOOL->getSubDictionary_json(doc, NODE);
     return loadNode(subJson);
 }
@@ -132,12 +172,13 @@ cocos2d::Node* NodeCache::loadNode(const rapidjson::Value& json)
 {
     cocos2d::Node* node = nullptr;
 
-    std::string nodeType = DICTOOL->getStringValue_json(json, NODETYPE);
+    std::string nodeType = DICTOOL->getStringValue_json(json, CLASSNAME);
 
     NodeCreateFunc func = _funcs.at(nodeType);
     if (func != nullptr)
     {
-        node = func(json);
+        const rapidjson::Value &options = DICTOOL->getSubDictionary_json(json, OPTIONS);
+        node = func(options);
     }
 
     int tag = DICTOOL->getIntValue_json(json, ACTION_TAG);
@@ -199,6 +240,14 @@ void NodeCache::initNode(cocos2d::Node* node, const rapidjson::Value& json)
 
 Node* NodeCache::loadSimpleNode(const rapidjson::Value& json)
 {
+    Node* node = Node::create();
+    initNode(node, json);
+
+    return node;
+}
+
+cocos2d::Node* NodeCache::loadSubGraph(const rapidjson::Value& json)
+{
     const char* filePath = DICTOOL->getStringValue_json(json, FILE_PATH);
 
     Node* node = nullptr;
@@ -242,6 +291,21 @@ Node* NodeCache::loadSprite(const rapidjson::Value& json)
 Node* NodeCache::loadParticle(const rapidjson::Value& json)
 {
     return nullptr;
+}
+
+cocos2d::Node* NodeCache::loadWidget(const rapidjson::Value& json)
+{
+    const char* classname = DICTOOL->getStringValue_json(json, CLASSNAME);
+
+    std::string readerName = classname;
+    readerName.append("Reader");
+
+    Widget*               widget = ObjectFactory::getInstance()->createGUI(classname);
+    WidgetReaderProtocol* reader = ObjectFactory::getInstance()->createWidgetReaderProtocol(readerName);
+
+    _guiReader->setPropsForAllWidgetFromJsonDictionary(reader, widget, json);
+
+    return widget;
 }
 
 }
