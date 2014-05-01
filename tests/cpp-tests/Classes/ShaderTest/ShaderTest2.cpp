@@ -16,7 +16,8 @@ namespace ShaderTest2
         CL(EdgeDetectionSpriteTest),
         CL(BloomSpriteTest),
         CL(CelShadingSpriteTest),
-        CL(LensFlareSpriteTest)
+        CL(LensFlareSpriteTest),
+        CL(OutlineShadingSpriteTest)
     };
     
     static unsigned int TEST_CASE_COUNT = sizeof(ShaderTest2::createFunctions) / sizeof(ShaderTest2::createFunctions[0]);
@@ -112,7 +113,7 @@ public:
     virtual void initShader();
     void setBackgroundNotification();
 
-    virtual void draw(Renderer *renderer, const kmMat4 &transform, bool transformUpdated) override;
+    virtual void draw(Renderer *renderer, const Matrix &transform, bool transformUpdated) override;
     void listenBackToForeground(Ref *obj);
     
 protected:
@@ -120,14 +121,15 @@ protected:
     virtual void setCustomUniforms() = 0;
 protected:
     std::string _fragSourceFile;
-    
+    std::string _vertSourceFile;
 protected:
     CustomCommand _renderCommand;
-    void onDraw(const kmMat4 &transform, bool transformUpdated);
+    void onDraw(const Matrix &transform, bool transformUpdated);
 
 };
 
 ShaderSprite::ShaderSprite()
+:_vertSourceFile("")
 {
 }
 
@@ -148,10 +150,19 @@ void ShaderSprite::setBackgroundNotification()
 
 void ShaderSprite::initShader()
 {
-    GLchar * fragSource = (GLchar*) String::createWithContentsOfFile(
-                                                                     FileUtils::getInstance()->fullPathForFilename(_fragSourceFile).c_str())->getCString();
+    auto fileUtiles = FileUtils::getInstance();
+    auto fragmentFilePath = fileUtiles->fullPathForFilename(_fragSourceFile);
+    auto fragSource = fileUtiles->getStringFromFile(fragmentFilePath);
+    std::string vertSource;
+    if (_vertSourceFile.empty()) {
+        vertSource = ccPositionTextureColor_vert;
+    }else{
+        std::string vertexFilePath = fileUtiles->fullPathForFilename(_vertSourceFile);
+        vertSource = fileUtiles->getStringFromFile(vertexFilePath);
+    }
+
     auto program = new GLProgram();
-    program->initWithByteArrays(ccPositionTextureColor_vert, fragSource);
+    program->initWithByteArrays(vertSource.c_str(), fragSource.c_str());
     setShaderProgram(program);
     program->release();
     
@@ -176,7 +187,7 @@ void ShaderSprite::initShader()
     CHECK_GL_ERROR_DEBUG();
 }
 
-void ShaderSprite::draw(Renderer *renderer, const kmMat4 &transform, bool transformUpdated)
+void ShaderSprite::draw(Renderer *renderer, const Matrix &transform, bool transformUpdated)
 {
     _renderCommand.init(_globalZOrder);
     _renderCommand.func = CC_CALLBACK_0(ShaderSprite::onDraw, this, transform, transformUpdated);
@@ -184,7 +195,7 @@ void ShaderSprite::draw(Renderer *renderer, const kmMat4 &transform, bool transf
 
 }
 
-void ShaderSprite::onDraw(const kmMat4 &transform, bool transformUpdated)
+void ShaderSprite::onDraw(const Matrix &transform, bool transformUpdated)
 {
     auto shader = getShaderProgram();
     shader->use();
@@ -279,7 +290,7 @@ protected:
     virtual void setCustomUniforms();
 protected:
     int       _blurRadius;
-    Point     _pixelSize;
+    Vector2     _pixelSize;
     
     int       _samplingRadius;
     float     _scale;
@@ -299,7 +310,7 @@ void BlurSprite::buildCustomUniforms()
 {
     auto s = getTexture()->getContentSizeInPixels();
     _blurRadius = 0;
-    _pixelSize = Point(1/s.width, 1/s.height);
+    _pixelSize = Vector2(1/s.width, 1/s.height);
     _samplingRadius = 0;
 
     setBlurSize(3.0f);
@@ -528,7 +539,7 @@ NormalSpriteTest::NormalSpriteTest()
     {
         auto s = Director::getInstance()->getWinSize();
         NormalSprite* sprite = NormalSprite::createSprite("Images/powered.png");
-        sprite->setPosition(Point(s.width/2, s.height/2));
+        sprite->setPosition(Vector2(s.width/2, s.height/2));
         addChild(sprite);
     }
     
@@ -540,9 +551,9 @@ GreyScaleSpriteTest::GreyScaleSpriteTest()
     {
         auto s = Director::getInstance()->getWinSize();
         GreyScaleSprite* sprite = GreyScaleSprite::createSprite("Images/powered.png");
-        sprite->setPosition(Point(s.width * 0.75, s.height/2));
+        sprite->setPosition(Vector2(s.width * 0.75, s.height/2));
         auto sprite2 = Sprite::create("Images/powered.png");
-        sprite2->setPosition(Point(s.width * 0.25, s.height/2));
+        sprite2->setPosition(Vector2(s.width * 0.25, s.height/2));
         addChild(sprite);
         addChild(sprite2);
     }
@@ -555,9 +566,9 @@ BlurSpriteTest::BlurSpriteTest()
     {
         auto s = Director::getInstance()->getWinSize();
         BlurSprite* sprite = BlurSprite::createSprite("Images/powered.png");
-        sprite->setPosition(Point(s.width * 0.75, s.height/2));
+        sprite->setPosition(Vector2(s.width * 0.75, s.height/2));
         auto sprite2 = Sprite::create("Images/powered.png");
-        sprite2->setPosition(Point(s.width * 0.25, s.height/2));
+        sprite2->setPosition(Vector2(s.width * 0.25, s.height/2));
         addChild(sprite);
         addChild(sprite2);
     }
@@ -570,9 +581,9 @@ NoiseSpriteTest::NoiseSpriteTest()
     {
         auto s = Director::getInstance()->getWinSize();
         NoiseSprite* sprite = NoiseSprite::createSprite("Images/powered.png");
-        sprite->setPosition(Point(s.width * 0.75, s.height/2));
+        sprite->setPosition(Vector2(s.width * 0.75, s.height/2));
         auto sprite2 = Sprite::create("Images/powered.png");
-        sprite2->setPosition(Point(s.width * 0.25, s.height/2));
+        sprite2->setPosition(Vector2(s.width * 0.25, s.height/2));
         addChild(sprite);
         addChild(sprite2);
     }
@@ -584,9 +595,9 @@ EdgeDetectionSpriteTest::EdgeDetectionSpriteTest()
     {
         auto s = Director::getInstance()->getWinSize();
         EdgeDetectionSprite* sprite = EdgeDetectionSprite::createSprite("Images/powered.png");
-        sprite->setPosition(Point(s.width * 0.75, s.height/2));
+        sprite->setPosition(Vector2(s.width * 0.75, s.height/2));
         auto sprite2 = Sprite::create("Images/powered.png");
-        sprite2->setPosition(Point(s.width * 0.25, s.height/2));
+        sprite2->setPosition(Vector2(s.width * 0.25, s.height/2));
         addChild(sprite);
         addChild(sprite2);
     }
@@ -598,9 +609,9 @@ BloomSpriteTest::BloomSpriteTest()
     {
         auto s = Director::getInstance()->getWinSize();
         BloomSprite* sprite = BloomSprite::createSprite("Images/stone.png");
-        sprite->setPosition(Point(s.width * 0.75, s.height/2));
+        sprite->setPosition(Vector2(s.width * 0.75, s.height/2));
         auto sprite2 = Sprite::create("Images/stone.png");
-        sprite2->setPosition(Point(s.width * 0.25, s.height/2));
+        sprite2->setPosition(Vector2(s.width * 0.25, s.height/2));
         addChild(sprite);
         addChild(sprite2);
     }
@@ -612,9 +623,9 @@ CelShadingSpriteTest::CelShadingSpriteTest()
     {
         auto s = Director::getInstance()->getWinSize();
         CelShadingSprite* sprite = CelShadingSprite::createSprite("Images/stone.png");
-        sprite->setPosition(Point(s.width * 0.75, s.height/2));
+        sprite->setPosition(Vector2(s.width * 0.75, s.height/2));
         auto sprite2 = Sprite::create("Images/stone.png");
-        sprite2->setPosition(Point(s.width * 0.25, s.height/2));
+        sprite2->setPosition(Vector2(s.width * 0.25, s.height/2));
         addChild(sprite);
         addChild(sprite2);
     }
@@ -628,7 +639,64 @@ LensFlareSpriteTest::LensFlareSpriteTest()
         LensFlareSprite* sprite = LensFlareSprite::createSprite("Images/noise.png");
         Rect rect = Rect::ZERO;
         rect.size = Size(480,320);
-        sprite->setPosition(Point(s.width * 0.5, s.height/2));
+        sprite->setPosition(Vector2(s.width * 0.5, s.height/2));
         addChild(sprite);
+    }
+}
+
+
+class OutlineSprite : public ShaderSprite, public ShaderSpriteCreator<OutlineSprite>
+{
+public:
+    CREATE_FUNC(OutlineSprite);
+    OutlineSprite();
+    
+private:
+    GLuint _outlineColorUniformLocation;
+    GLuint _thresdholdUniformLocation;
+    GLuint _radiusUniformLocation;
+protected:
+    virtual void buildCustomUniforms();
+    virtual void setCustomUniforms();
+};
+
+
+OutlineSprite::OutlineSprite()
+{
+    _fragSourceFile = "Shaders/example_outline.fsh";
+    _vertSourceFile = "Shaders/example_outline.vsh";
+    _blendFunc = BlendFunc::ALPHA_PREMULTIPLIED;
+}
+
+void OutlineSprite::buildCustomUniforms()
+{
+    auto program = getShaderProgram();
+    _outlineColorUniformLocation = program->getUniformLocation("u_outlineColor");
+    _thresdholdUniformLocation = program->getUniformLocation("u_threshold");
+    _radiusUniformLocation = program->getUniformLocation("u_radius");
+}
+
+void OutlineSprite::setCustomUniforms()
+{
+    GLfloat color[3] = {1.0, 0.2, 0.3};
+    GLfloat radius = 0.01;
+    GLfloat threshold = 1.75;
+    
+    getShaderProgram()->setUniformLocationWith3fv(_outlineColorUniformLocation, color, 1);
+    getShaderProgram()->setUniformLocationWith1f(_radiusUniformLocation, radius);
+    getShaderProgram()->setUniformLocationWith1f(_thresdholdUniformLocation, threshold);
+}
+
+
+OutlineShadingSpriteTest::OutlineShadingSpriteTest()
+{
+    if (ShaderTestDemo2::init()) {
+        auto s = Director::getInstance()->getWinSize();
+        OutlineSprite* sprite = OutlineSprite::createSprite("Images/grossini_dance_10.png");
+        sprite->setPosition(Vector2(s.width * 0.75, s.height/2));
+        auto sprite2 = Sprite::create("Images/grossini_dance_10.png");
+        sprite2->setPosition(Vector2(s.width * 0.25, s.height/2));
+        addChild(sprite);
+        addChild(sprite2);
     }
 }

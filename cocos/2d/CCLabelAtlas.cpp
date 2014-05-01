@@ -25,19 +25,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 #include "CCLabelAtlas.h"
-#include "CCTextureAtlas.h"
-#include "CCTextureCache.h"
-#include "CCDrawingPrimitives.h"
-#include "ccConfig.h"
-#include "CCShaderCache.h"
-#include "CCGLProgram.h"
-#include "ccGLStateCache.h"
-#include "CCDirector.h"
-#include "TransformUtils.h"
-#include "platform/CCFileUtils.h"
+#include "2d/CCTextureAtlas.h"
+#include "2d/CCTextureCache.h"
+#include "2d/CCDrawingPrimitives.h"
+#include "base/ccConfig.h"
+#include "2d/CCShaderCache.h"
+#include "2d/CCGLProgram.h"
+#include "2d/ccGLStateCache.h"
+#include "base/CCDirector.h"
+#include "math/TransformUtils.h"
+#include "2d/platform/CCFileUtils.h"
 // external
-#include "kazmath/GL/matrix.h"
 #include "deprecated/CCString.h"
+
+#if CC_LABELATLAS_DEBUG_DRAW
+#include "renderer/CCRenderer.h"
+#include "base/CCDirector.h"
+#endif
 
 NS_CC_BEGIN
 
@@ -244,18 +248,35 @@ void LabelAtlas::updateColor()
 }
 
 //CCLabelAtlas - draw
-
-#if CC_LABELATLAS_DEBUG_DRAW    
-void LabelAtlas::draw()
+#if CC_LABELATLAS_DEBUG_DRAW
+void LabelAtlas::draw(Renderer *renderer, const Matrix &transform, bool transformUpdated)
 {
-    AtlasNode::draw();
+    AtlasNode::draw(renderer, transform, transformUpdated);
 
-    const Size& s = this->getContentSize();
-    Point vertices[4]={
-        Point(0,0),Point(s.width,0),
-        Point(s.width,s.height),Point(0,s.height),
+    _customDebugDrawCommand.init(_globalZOrder);
+    _customDebugDrawCommand.func = CC_CALLBACK_0(LabelAtlas::drawDebugData, this,transform,transformUpdated);
+    renderer->addCommand(&_customDebugDrawCommand);
+}
+
+void LabelAtlas::drawDebugData(const Matrix& transform, bool transformUpdated)
+{
+    Director* director = Director::getInstance();
+    director->pushMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
+    director->loadMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW, transform);
+
+    auto size = getContentSize();
+
+    Vector2 vertices[4]=
+    {
+        Vector2::ZERO,
+        Vector2(size.width, 0),
+        Vector2(size.width, size.height),
+        Vector2(0, size.height)
     };
-    ccDrawPoly(vertices, 4, true);
+
+    DrawPrimitives::drawPoly(vertices, 4, true);
+
+    director->popMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
 }
 #endif
 

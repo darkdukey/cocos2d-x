@@ -24,7 +24,7 @@
  ****************************************************************************/
 
 #include "CCEditBoxImplMac.h"
-#include "CCDirector.h"
+#include "base/CCDirector.h"
 
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_MAC)
 
@@ -61,6 +61,7 @@
 @implementation CCEditBoxImplMac
 
 @synthesize textField = textField_;
+@synthesize placeholderAttributes = placeholderAttributes_;
 @synthesize editState = editState_;
 @synthesize editBox = editBox_;
 
@@ -75,6 +76,7 @@
     [textField_ resignFirstResponder];
     [textField_ removeFromSuperview];
     self.textField = NULL;
+    [placeholderAttributes_ release];
     [super dealloc];
 }
 
@@ -88,13 +90,17 @@
         editState_ = NO;
         self.textField = [[[CCCustomNSTextField alloc] initWithFrame: frameRect] autorelease];
         if (!textField_) break;
-        [textField_ setTextColor:[NSColor whiteColor]];
-        textField_.font = [NSFont systemFontOfSize:frameRect.size.height*2/3]; //TODO need to delete hard code here.
+        NSFont *font = [NSFont systemFontOfSize:frameRect.size.height*2/3]; //TODO need to delete hard code here.
+        textField_.textColor = [NSColor whiteColor];
+        textField_.font = font;
         textField_.backgroundColor = [NSColor clearColor];
         [textField_ setup];
         textField_.delegate = self;
-        [textField_ setDelegate:self];
         self.editBox = editBox;
+        self.placeholderAttributes = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                                      font, NSFontAttributeName,
+                                      [NSColor grayColor], NSForegroundColorAttributeName,
+                                      nil];
         
         [[[self getNSWindow] contentView] addSubview:textField_];
         
@@ -187,8 +193,8 @@
         cocos2d::CommonScriptData data(pEditBox->getScriptEditBoxHandler(), "ended",pEditBox);
         cocos2d::ScriptEvent event(cocos2d::kCommonEvent,(void*)&data);
         cocos2d::ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&event);
-        memset(data.eventName,0,64*sizeof(char));
-        strncpy(data.eventName,"return",64);
+        memset(data.eventName, 0, sizeof(data.eventName));
+        strncpy(data.eventName, "return", sizeof(data.eventName));
         event.data = (void*)&data;
         cocos2d::ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&event);
     }
@@ -252,7 +258,7 @@ EditBoxImpl* __createSystemEditBox(EditBox* pEditBox)
 
 EditBoxImplMac::EditBoxImplMac(EditBox* pEditText)
 : EditBoxImpl(pEditText)
-, _anchorPoint(Point(0.5f, 0.5f))
+, _anchorPoint(Vector2(0.5f, 0.5f))
 , _maxTextLength(-1)
 , _sysEdit(nullptr)
 {
@@ -293,18 +299,29 @@ bool EditBoxImplMac::initWithSize(const Size& size)
 
 void EditBoxImplMac::setFont(const char* pFontName, int fontSize)
 {
-    //TODO:
-//	if(pFontName == NULL)
-//		return;
-//	NSString * fntName = [NSString stringWithUTF8String:pFontName];
-//	UIFont *textFont = [UIFont fontWithName:fntName size:fontSize];
-//	if(textFont != nil)
-//		[_sysEdit.textField setFont:textFont];
+	NSString * fntName = [NSString stringWithUTF8String:pFontName];
+	NSFont *textFont = [NSFont fontWithName:fntName size:fontSize];
+	if(textFont != nil)
+		[_sysEdit.textField setFont:textFont];
 }
 
 void EditBoxImplMac::setPlaceholderFont(const char* pFontName, int fontSize)
 {
-	// TODO need to be implemented.
+    NSString *fontName = [NSString stringWithUTF8String:pFontName];
+    NSFont *font = [NSFont fontWithName:fontName size:fontSize];
+    
+    if (!font) {
+        CCLOGWARN("Font not found: %s", pFontName);
+        return;
+    }
+    
+    _sysEdit.placeholderAttributes[NSFontAttributeName] = font;
+    
+    /* reload placeholder */
+    const char *placeholder = [_sysEdit.textField.cell placeholderAttributedString].string.UTF8String;
+    if (placeholder) {
+        setPlaceHolder(placeholder);
+    }
 }
 
 void EditBoxImplMac::setFontColor(const Color3B& color)
@@ -314,7 +331,14 @@ void EditBoxImplMac::setFontColor(const Color3B& color)
 
 void EditBoxImplMac::setPlaceholderFontColor(const Color3B& color)
 {
-    // TODO need to be implemented.
+    NSColor *nsColor = [NSColor colorWithCalibratedRed:color.r/255.f green:color.g / 255.f blue:color.b / 255.f alpha:1.0f];
+    _sysEdit.placeholderAttributes[NSForegroundColorAttributeName] = nsColor;
+    
+    /* reload placeholder */
+    const char *placeholder = [_sysEdit.textField.cell placeholderAttributedString].string.UTF8String;
+    if (placeholder) {
+        setPlaceHolder(placeholder);
+    }
 }
 
 void EditBoxImplMac::setInputMode(EditBox::InputMode inputMode)
@@ -357,18 +381,22 @@ const char*  EditBoxImplMac::getText(void)
 
 void EditBoxImplMac::setPlaceHolder(const char* pText)
 {
-    [[_sysEdit.textField cell] setPlaceholderString:[NSString stringWithUTF8String:pText]];
+    NSAttributedString *as = [[NSAttributedString alloc] initWithString:[NSString stringWithUTF8String:pText]
+                                                             attributes:_sysEdit.placeholderAttributes];
+    
+    [[_sysEdit.textField cell] setPlaceholderAttributedString:as];
+    [as release];
 }
 
-NSPoint EditBoxImplMac::convertDesignCoordToScreenCoord(const Point& designCoord, bool bInRetinaMode)
+NSPoint EditBoxImplMac::convertDesignCoordToScreenCoord(const Vector2& designCoord, bool bInRetinaMode)
 {
     NSRect frame = [_sysEdit.textField frame];
     CGFloat height = frame.size.height;
     
     GLViewProtocol* eglView = Director::getInstance()->getOpenGLView();
 
-    Point visiblePos = Point(designCoord.x * eglView->getScaleX(), designCoord.y * eglView->getScaleY());
-    Point screenGLPos = visiblePos + eglView->getViewPortRect().origin;
+    Vector2 visiblePos = Vector2(designCoord.x * eglView->getScaleX(), designCoord.y * eglView->getScaleY());
+    Vector2 screenGLPos = visiblePos + eglView->getViewPortRect().origin;
     
     //TODO: I don't know why here needs to substract `height`.
     NSPoint screenPos = NSMakePoint(screenGLPos.x, screenGLPos.y-height);
@@ -397,11 +425,11 @@ void EditBoxImplMac::adjustTextFieldPosition()
 
     rect = RectApplyAffineTransform(rect, _editBox->nodeToWorldTransform());
 	
-	Point designCoord = Point(rect.origin.x, rect.origin.y + rect.size.height);
+	Vector2 designCoord = Vector2(rect.origin.x, rect.origin.y + rect.size.height);
     [_sysEdit setPosition:convertDesignCoordToScreenCoord(designCoord, _inRetinaMode)];
 }
 
-void EditBoxImplMac::setPosition(const Point& pos)
+void EditBoxImplMac::setPosition(const Vector2& pos)
 {
     _position = pos;
     adjustTextFieldPosition();
@@ -418,7 +446,7 @@ void EditBoxImplMac::setContentSize(const Size& size)
     CCLOG("[Edit text] content size = (%f, %f)", size.width, size.height);
 }
 
-void EditBoxImplMac::setAnchorPoint(const Point& anchorPoint)
+void EditBoxImplMac::setAnchorPoint(const Vector2& anchorPoint)
 {
     CCLOG("[Edit text] anchor point = (%f, %f)", anchorPoint.x, anchorPoint.y);
 	_anchorPoint = anchorPoint;

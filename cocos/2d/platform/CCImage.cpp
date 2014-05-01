@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 
 #include "CCImage.h"
-#include "CCData.h"
+#include "base/CCData.h"
 
 #include <string>
 #include <ctype.h>
@@ -39,24 +39,24 @@ extern "C"
 {
 #include "png.h"
 #include "tiffio.h"
-#include "etc1.h"
+#include "base/etc1.h"
 #include "jpeglib.h"
 }
-#include "s3tc.h"
-#include "atitc.h"
-#include "TGAlib.h"
+#include "base/s3tc.h"
+#include "base/atitc.h"
+#include "2d/TGAlib.h"
 
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_WP8) && (CC_TARGET_PLATFORM != CC_PLATFORM_WINRT)
 #include "decode.h"
 #endif
 
-#include "ccMacros.h"
+#include "base/ccMacros.h"
 #include "CCCommon.h"
 #include "CCStdC.h"
 #include "CCFileUtils.h"
-#include "CCConfiguration.h"
-#include "ccUtils.h"
-#include "ZipUtils.h"
+#include "base/CCConfiguration.h"
+#include "2d/ccUtils.h"
+#include "base/ZipUtils.h"
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
 #include "android/CCFileUtilsAndroid.h"
 #endif
@@ -942,7 +942,14 @@ bool Image::initWithPngData(const unsigned char * data, ssize_t dataLen)
 
         _dataLen = rowbytes * _height;
         _data = static_cast<unsigned char*>(malloc(_dataLen * sizeof(unsigned char)));
-        CC_BREAK_IF(!_data);
+        if(!_data)
+        {
+            if (row_pointers != nullptr)
+            {
+                free(row_pointers);
+            }
+            break;
+        }
 
         for (unsigned short i = 0; i < _height; ++i)
         {
@@ -957,7 +964,7 @@ bool Image::initWithPngData(const unsigned char * data, ssize_t dataLen)
         if (row_pointers != nullptr)
         {
             free(row_pointers);
-        };
+        }
 
         bRet = true;
     } while (0);
@@ -2028,6 +2035,9 @@ bool Image::saveImageToPNG(const std::string& filePath, bool isToRGB)
                 {
                     fclose(fp);
                     png_destroy_write_struct(&png_ptr, &info_ptr);
+                    
+                    free(row_pointers);
+                    row_pointers = nullptr;
                     break;
                 }
 

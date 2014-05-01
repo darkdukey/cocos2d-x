@@ -71,16 +71,16 @@ bool EditBoxImplAndroid::initWithSize(const Size& size)
     _label = Label::create();
     _label->setSystemFontSize(size.height-12);
 	// align the text vertically center
-    _label->setAnchorPoint(Point(0, 0.5f));
-    _label->setPosition(Point(CC_EDIT_BOX_PADDING, size.height / 2.0f));
+    _label->setAnchorPoint(Vector2(0, 0.5f));
+    _label->setPosition(Vector2(CC_EDIT_BOX_PADDING, size.height / 2.0f));
     _label->setColor(_colText);
     _editBox->addChild(_label);
 	
     _labelPlaceHolder = Label::create();
     _labelPlaceHolder->setSystemFontSize(size.height-12);
 	// align the text vertically center
-    _labelPlaceHolder->setAnchorPoint(Point(0, 0.5f));
-    _labelPlaceHolder->setPosition(Point(CC_EDIT_BOX_PADDING, size.height / 2.0f));
+    _labelPlaceHolder->setAnchorPoint(Vector2(0, 0.5f));
+    _labelPlaceHolder->setPosition(Vector2(CC_EDIT_BOX_PADDING, size.height / 2.0f));
     _labelPlaceHolder->setVisible(false);
     _labelPlaceHolder->setColor(_colPlaceHolder);
     _editBox->addChild(_labelPlaceHolder);
@@ -215,7 +215,7 @@ void EditBoxImplAndroid::setPlaceHolder(const char* pText)
     }
 }
 
-void EditBoxImplAndroid::setPosition(const Point& pos)
+void EditBoxImplAndroid::setPosition(const Vector2& pos)
 { // don't need to be implemented on android platform.
 	
 }
@@ -230,7 +230,7 @@ void EditBoxImplAndroid::setContentSize(const Size& size)
 	
 }
 
-void EditBoxImplAndroid::setAnchorPoint(const Point& anchorPoint)
+void EditBoxImplAndroid::setAnchorPoint(const Vector2& anchorPoint)
 { // don't need to be implemented on android platform.
 	
 }
@@ -264,12 +264,12 @@ static void editBoxCallbackFunc(const char* pText, void* ctx)
         CommonScriptData data(pEditBox->getScriptEditBoxHandler(), "changed",pEditBox);
         ScriptEvent event(kCommonEvent,(void*)&data);
         ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&event);
-        memset(data.eventName,0,64*sizeof(char));
-        strncpy(data.eventName,"ended",64);
+        memset(data.eventName, 0, sizeof(data.eventName));
+        strncpy(data.eventName, "ended", sizeof(data.eventName));
         event.data = (void*)&data;
         ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&event);
-        memset(data.eventName,0,64*sizeof(char));
-        strncpy(data.eventName,"return",64);
+        memset(data.eventName, 0, sizeof(data.eventName));
+        strncpy(data.eventName, "return", sizeof(data.eventName));
         event.data = (void*)&data;
         ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&event);
     }

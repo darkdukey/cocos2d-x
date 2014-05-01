@@ -136,15 +136,7 @@ endif()
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/cocos
-  ${CMAKE_CURRENT_SOURCE_DIR}/cocos/audio/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/cocos/2d
-  ${CMAKE_CURRENT_SOURCE_DIR}/cocos/2d/renderer
-  ${CMAKE_CURRENT_SOURCE_DIR}/cocos/2d/platform
-  ${CMAKE_CURRENT_SOURCE_DIR}/cocos/base
-  ${CMAKE_CURRENT_SOURCE_DIR}/cocos/deprecated
-  ${CMAKE_CURRENT_SOURCE_DIR}/cocos/physics
   ${CMAKE_CURRENT_SOURCE_DIR}/cocos/editor-support
-  ${CMAKE_CURRENT_SOURCE_DIR}/cocos/math/kazmath
   ${CMAKE_CURRENT_SOURCE_DIR}/cocos/scripting/lua-bindings/auto
   ${CMAKE_CURRENT_SOURCE_DIR}/cocos/scripting/lua-bindings/manual
   ${CMAKE_CURRENT_SOURCE_DIR}/extensions
@@ -218,10 +210,6 @@ else()
 
 endif()
 
-
-# kazmath
-add_subdirectory(cocos/math/kazmath)
-
 # chipmunk library
 add_subdirectory(external/chipmunk/src)
 
@@ -240,11 +228,17 @@ add_subdirectory(external/xxhash)
 # audio
 add_subdirectory(cocos/audio)
 
-# cocos base library
-add_subdirectory(cocos/base)
+# cocos renderer library
+add_subdirectory(cocos/renderer)
+
+# cocos math library
+add_subdirectory(cocos/math)
 
 # cocos 2d library
 add_subdirectory(cocos/2d)
+
+# cocos base library
+add_subdirectory(cocos/base)
 
 if(BUILD_STORAGE)
 # cocos storage
@@ -303,8 +297,7 @@ if(BUILD_CppTests)
 add_subdirectory(tests/cpp-tests)
 endif(BUILD_CppTests)
 
-add_subdirectory(tests/lua-empty-test/project)
-
 if(BUILD_LuaTests)
 add_subdirectory(tests/lua-tests/project)
+add_subdirectory(tests/lua-empty-test/project)
 endif(BUILD_LuaTests)

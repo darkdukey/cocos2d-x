@@ -24,14 +24,14 @@
  ****************************************************************************/
 
 
-#include "CCPlatformConfig.h"
+#include "base/CCPlatformConfig.h"
 #if CC_TARGET_PLATFORM == CC_PLATFORM_IOS
 
 #include "CCDevice.h"
-#include "ccTypes.h"
-#include "CCEventDispatcher.h"
-#include "CCEventAcceleration.h"
-#include "CCDirector.h"
+#include "base/ccTypes.h"
+#include "base/CCEventDispatcher.h"
+#include "base/CCEventAcceleration.h"
+#include "base/CCDirector.h"
 #import <UIKit/UIKit.h>
 
 // Accelerometer

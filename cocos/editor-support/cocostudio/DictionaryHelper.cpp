@@ -22,8 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "CCPlatformMacros.h"
-#include "CCGeometry.h"
+#include "base/CCPlatformMacros.h"
 #include "cocostudio/DictionaryHelper.h"
 
 namespace cocostudio {
@@ -117,18 +116,7 @@ const char* DictionaryHelper::getStringValue_json(const rapidjson::Value& root,c
     return sRet;
 }
 
-cocos2d::Point DictionaryHelper::getPointValue_json(const rapidjson::Value& root,const char* key, const cocos2d::Point& def)
-{
-    cocos2d::Point ret;
-    do {
-        CC_BREAK_IF(root.IsNull());
-        CC_BREAK_IF(root[key].IsNull());
-        const rapidjson::Value& point = getSubDictionary_json(root, key);
-        ret.x = getFloatValue_json(point, "x");
-        ret.y = getFloatValue_json(point, "y");
-    } while (0);
-    return ret;
-}
+
 
 int DictionaryHelper::getArrayCount_json(const rapidjson::Value& root, const char* key, int def)
 {
