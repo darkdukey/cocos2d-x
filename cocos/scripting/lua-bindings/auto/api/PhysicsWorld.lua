@@ -3,14 +3,19 @@
 -- @module PhysicsWorld
 
 --------------------------------
--- @function [parent=#PhysicsWorld] setGravity 
+-- @function [parent=#PhysicsWorld] getGravity 
 -- @param self
--- @param #cc.math::Vector2 array
+-- @return math::Vector2#math::Vector2 ret (return value: cc.math::Vector2)
         
 --------------------------------
 -- @function [parent=#PhysicsWorld] getAllBodies 
 -- @param self
 -- @return array_table#array_table ret (return value: array_table)
+        
+--------------------------------
+-- @function [parent=#PhysicsWorld] setGravity 
+-- @param self
+-- @param #cc.math::Vector2 array
         
 --------------------------------
 -- @function [parent=#PhysicsWorld] getSpeed 
@@ -66,11 +71,6 @@
 -- @function [parent=#PhysicsWorld] getDebugDrawMask 
 -- @param self
 -- @return int#int ret (return value: int)
-        
---------------------------------
--- @function [parent=#PhysicsWorld] getGravity 
--- @param self
--- @return math::Vector2#math::Vector2 ret (return value: cc.math::Vector2)
         
 --------------------------------
 -- @function [parent=#PhysicsWorld] setDebugDrawMask 
