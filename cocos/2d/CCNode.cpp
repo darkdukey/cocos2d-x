@@ -320,6 +320,11 @@ void Node::setRotation3D(const Vec3& rotation)
 #endif
 }
 
+void Node::rotate3D(float x, float y, float z)
+{
+    setRotation3D(Vec3(_rotationX + x, _rotationY + y, _rotationZ_X + z));
+}
+
 Vec3 Node::getRotation3D() const
 {
     // rotation Z is decomposed in 2 to simulate Skew for Flash animations

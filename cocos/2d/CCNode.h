@@ -538,6 +538,9 @@ public:
      * @warning The physics body doesn't support this.
      */
     virtual void setRotation3D(const Vec3& rotation);
+    
+    virtual void rotate3D(float x, float y, float z);
+    
     /**
      * returns the rotation (X,Y,Z) in degrees.
      */
