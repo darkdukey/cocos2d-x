@@ -285,6 +285,9 @@ Label::Label(FontAtlas *atlas /* = nullptr */, TextHAlignment hAlignment /* = Te
         }
     });
     _eventDispatcher->addEventListenerWithSceneGraphPriority(resetTextureListener, this);
+    
+    _shaderShadow = GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP);
+    _shaderShadow->retain();
 }
 
 Label::~Label()
@@ -295,6 +298,8 @@ Label::~Label()
     {
         FontAtlasCache::releaseFontAtlas(_fontAtlas);
     }
+    
+    CC_SAFE_RELEASE(_shaderShadow);
 
     CC_SAFE_RELEASE_NULL(_reusedLetter);
 }
@@ -903,10 +908,39 @@ void Label::draw(Renderer *renderer, const Mat4 &transform, uint32_t flags)
     if(_insideBounds)
 #endif
     {
-        _customCommand.init(_globalZOrder, transform, flags);
-        _customCommand.func = CC_CALLBACK_0(Label::onDraw, this, transform, transformUpdated);
+        CC_PROFILER_START("Label - draw");
+        
+        // Optimization: Fast Dispatch
+        if( _batchNodes.size() == 1 && _textureAtlas->getTotalQuads() == 0 )
+        {
+            return;
+        }
+        //Draw shadow
+        if (_currentLabelType == LabelType::TTF)
+        {
+            getGLProgramState()->setUniformVec4(_uniformTextColor, Vec4(_textColorF.r,_textColorF.g,_textColorF.b,_textColorF.a));
+            _shaderShadow->setUniformVec4(_uniformTextColor, Vec4(_textColorF.r,_textColorF.g,_textColorF.b,_textColorF.a));
+        }
+        
+        if (_currLabelEffect == LabelEffect::OUTLINE || _currLabelEffect == LabelEffect::GLOW)
+        {
+            getGLProgramState()->setUniformVec4(_uniformEffectColor, Vec4(_effectColorF.r,_effectColorF.g,_effectColorF.b,_effectColorF.a));
+            _shaderShadow->setUniformVec4(_uniformEffectColor, Vec4(_effectColorF.r,_effectColorF.g,_effectColorF.b,_effectColorF.a));
+        }
+        
+        if(_shadowEnabled && _shadowBlurRadius <= 0)
+        {
+            _shadowCommand.init(_globalZOrder, _shadowShader, _blendFunc, _textureAtlas, transform, flags);
+            renderer->addCommand(&_shadowCommand);
+        }
+        
+        //Draw label
+        SpriteBatchNode::draw(renderer, transform, flags);
+        
+//        _customCommand.init(_globalZOrder, transform, flags);
+//        _customCommand.func = CC_CALLBACK_0(Label::onDraw, this, transform, transformUpdated);
 
-        renderer->addCommand(&_customCommand);
+//        renderer->addCommand(&_customCommand);
     }
 }
 

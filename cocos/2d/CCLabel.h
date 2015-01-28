@@ -28,10 +28,11 @@
 #define _COCOS2D_CCLABEL_H_
 
 #include "2d/CCSpriteBatchNode.h"
-#include "renderer/CCCustomCommand.h"
 #include "2d/CCFontAtlas.h"
 
 NS_CC_BEGIN
+
+class GLProgramState;
 
 enum class GlyphCollection {
     
@@ -385,9 +386,11 @@ protected:
     Color4B _effectColor;
     Color4F _effectColorF;
 
+    GLProgramState* _shaderShadow;
+
     GLuint _uniformEffectColor;
     GLuint _uniformTextColor;
-    CustomCommand _customCommand;   
+    BatchCommand _shadowCommand;
 
     bool    _shadowDirty;
     bool    _shadowEnabled;
