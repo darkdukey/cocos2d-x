@@ -27,7 +27,7 @@
 #include "renderer/ccGLStateCache.h"
 #include "renderer/CCTextureAtlas.h"
 #include "renderer/CCTexture2D.h"
-#include "renderer/CCGLProgram.h"
+#include "renderer/CCGLProgramState.h"
 
 NS_CC_BEGIN
 
@@ -40,7 +40,7 @@ BatchCommand::BatchCommand()
     _shader = nullptr;
 }
 
-void BatchCommand::init(float globalOrder, GLProgram* shader, BlendFunc blendType, TextureAtlas *textureAtlas, const Mat4& modelViewTransform, uint32_t flags)
+void BatchCommand::init(float globalOrder, GLProgramState* shader, BlendFunc blendType, TextureAtlas *textureAtlas, const Mat4& modelViewTransform, uint32_t flags)
 {
     CCASSERT(shader, "shader cannot be nill");
     CCASSERT(textureAtlas, "textureAtlas cannot be nill");
@@ -55,11 +55,6 @@ void BatchCommand::init(float globalOrder, GLProgram* shader, BlendFunc blendTyp
     _mv = modelViewTransform;
 }
 
-void BatchCommand::init(float globalOrder, GLProgram* shader, BlendFunc blendType, TextureAtlas *textureAtlas, const Mat4& modelViewTransform)
-{
-    init(globalOrder, shader, blendType, textureAtlas, modelViewTransform, 0);
-}
-
 BatchCommand::~BatchCommand()
 {
 }
@@ -67,11 +62,11 @@ BatchCommand::~BatchCommand()
 void BatchCommand::execute()
 {
     // Set material
-    _shader->use();
-    _shader->setUniformsForBuiltins(_mv);
     GL::bindTexture2D(_textureID);
     GL::blendFunc(_blendType.src, _blendType.dst);
 
+    _shader->apply(_mv);
+    
     // Draw
     _textureAtlas->drawQuads();
 }

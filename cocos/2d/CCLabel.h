@@ -324,6 +324,8 @@ protected:
 
     virtual void updateColor() override;
 
+    void updateShadowShader(GLProgramState* shader);
+
     virtual void updateShaderProgram();
 
     void drawShadowWithoutBlur();
@@ -386,7 +388,7 @@ protected:
     Color4B _effectColor;
     Color4F _effectColorF;
 
-    GLProgramState* _shaderShadow;
+    GLProgramState* _shadowShader;
 
     GLuint _uniformEffectColor;
     GLuint _uniformTextColor;

@@ -37,6 +37,8 @@
 #include "base/CCEventDispatcher.h"
 #include "base/CCEventCustom.h"
 #include "deprecated/CCString.h"
+#include "renderer/ccShaders.h"
+#include "renderer/CCGLProgram.h"
 
 NS_CC_BEGIN
 
@@ -286,8 +288,8 @@ Label::Label(FontAtlas *atlas /* = nullptr */, TextHAlignment hAlignment /* = Te
     });
     _eventDispatcher->addEventListenerWithSceneGraphPriority(resetTextureListener, this);
     
-    _shaderShadow = GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP);
-    _shaderShadow->retain();
+    _shadowShader = GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR);
+    _shadowShader->retain();
 }
 
 Label::~Label()
@@ -299,7 +301,7 @@ Label::~Label()
         FontAtlasCache::releaseFontAtlas(_fontAtlas);
     }
     
-    CC_SAFE_RELEASE(_shaderShadow);
+    CC_SAFE_RELEASE(_shadowShader);
 
     CC_SAFE_RELEASE_NULL(_reusedLetter);
 }
@@ -341,27 +343,48 @@ void Label::reset()
     _blendFuncDirty = false;
 }
 
+void Label::updateShadowShader(GLProgramState* shader)
+{
+    if (_shadowShader != shader)
+    {
+        CC_SAFE_RELEASE(_shadowShader);
+        _shadowShader = shader;
+        CC_SAFE_RETAIN(_shadowShader);
+    }
+}
+
 void Label::updateShaderProgram()
 {
     switch (_currLabelEffect)
     {
     case cocos2d::LabelEffect::NORMAL:
         if (_useDistanceField)
+        {
             setGLProgramState(GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_LABEL_DISTANCEFIELD_NORMAL));
+            updateShadowShader(GLProgramState::create(GLProgram::createWithByteArrays(ccLabel_vert, ccLabelDistanceFieldNormal_frag)));
+        }
         else if (_useA8Shader)
+        {
             setGLProgramState(GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_LABEL_NORMAL));
+            updateShadowShader(GLProgramState::create(GLProgram::createWithByteArrays(ccLabel_vert, ccLabelNormal_frag)));
+        }
         else
+        {
             setGLProgramState(GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR));
+            updateShadowShader(GLProgramState::create(GLProgram::createWithByteArrays(ccPositionTextureColor_vert, ccPositionTextureColor_frag)));
+        }
 
         break;
-    case cocos2d::LabelEffect::OUTLINE: 
+    case cocos2d::LabelEffect::OUTLINE:
         setGLProgramState(GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_LABEL_OUTLINE));
+        updateShadowShader(GLProgramState::create(GLProgram::createWithByteArrays(ccLabel_vert, ccLabelOutline_frag)));
         _uniformEffectColor = glGetUniformLocation(getGLProgram()->getProgram(), "u_effectColor");
         break;
     case cocos2d::LabelEffect::GLOW:
         if (_useDistanceField)
         {
             setGLProgramState(GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_LABEL_DISTANCEFIELD_GLOW));
+            updateShadowShader(GLProgramState::create(GLProgram::createWithByteArrays(ccLabel_vert, ccLabelDistanceFieldGlow_frag)));
             _uniformEffectColor = glGetUniformLocation(getGLProgram()->getProgram(), "u_effectColor");
         }
         break;
@@ -919,18 +942,18 @@ void Label::draw(Renderer *renderer, const Mat4 &transform, uint32_t flags)
         if (_currentLabelType == LabelType::TTF)
         {
             getGLProgramState()->setUniformVec4(_uniformTextColor, Vec4(_textColorF.r,_textColorF.g,_textColorF.b,_textColorF.a));
-            _shaderShadow->setUniformVec4(_uniformTextColor, Vec4(_textColorF.r,_textColorF.g,_textColorF.b,_textColorF.a));
+            _shadowShader->setUniformVec4(_uniformTextColor, Vec4(_shadowColor.r,_shadowColor.g,_shadowColor.b,_shadowOpacity * _displayedOpacity));
         }
         
         if (_currLabelEffect == LabelEffect::OUTLINE || _currLabelEffect == LabelEffect::GLOW)
         {
             getGLProgramState()->setUniformVec4(_uniformEffectColor, Vec4(_effectColorF.r,_effectColorF.g,_effectColorF.b,_effectColorF.a));
-            _shaderShadow->setUniformVec4(_uniformEffectColor, Vec4(_effectColorF.r,_effectColorF.g,_effectColorF.b,_effectColorF.a));
+            _shadowShader->setUniformVec4(_uniformEffectColor, Vec4(_shadowColor.r,_shadowColor.g,_shadowColor.b,_shadowOpacity * _displayedOpacity));
         }
         
         if(_shadowEnabled && _shadowBlurRadius <= 0)
         {
-            _shadowCommand.init(_globalZOrder, _shadowShader, _blendFunc, _textureAtlas, transform, flags);
+            _shadowCommand.init(_globalZOrder, _shadowShader, _blendFunc, _textureAtlas, _shadowTransform, flags);
             renderer->addCommand(&_shadowCommand);
         }
         
@@ -1354,6 +1377,7 @@ void Label::setTextColor(const Color4B &color)
     _textColorF.g = _textColor.g / 255.0f;
     _textColorF.b = _textColor.b / 255.0f;
     _textColorF.a = _textColor.a / 255.0f;
+    
 }
 
 void Label::updateColor()

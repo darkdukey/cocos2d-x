@@ -30,7 +30,7 @@
 NS_CC_BEGIN
 
 class TextureAtlas;
-class GLProgram;
+class GLProgramState;
 
 class CC_DLL BatchCommand : public RenderCommand
 {
@@ -39,8 +39,7 @@ public:
     BatchCommand();
     ~BatchCommand();
 
-    void init(float globalZOrder, GLProgram* shader, BlendFunc blendType, TextureAtlas *textureAtlas, const Mat4& modelViewTransform, uint32_t flags);
-    CC_DEPRECATED_ATTRIBUTE void init(float depth, GLProgram* shader, BlendFunc blendType, TextureAtlas *textureAtlas, const Mat4& modelViewTransform);
+    void init(float globalZOrder, GLProgramState* shader, BlendFunc blendType, TextureAtlas *textureAtlas, const Mat4& modelViewTransform, uint32_t flags);
 
     void execute();
 
@@ -48,7 +47,7 @@ protected:
     //Material
     int32_t _materialID;
     GLuint _textureID;
-    GLProgram* _shader;
+    GLProgramState* _shader;
     BlendFunc _blendType;
 
     TextureAtlas *_textureAtlas;
